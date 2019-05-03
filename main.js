@@ -26,6 +26,8 @@ var problems = {
     }
 };
 
+const matrix = [[]];
+
 var solve_problem_dumb = function (problem) {
     var solution = {
         problem_id: problem.problem_id,
@@ -58,5 +60,25 @@ var findClosestOrder = function (orders, pos) {
     return orders[orders.length-1];
 }
 
-var solution = solve_problem_dumb(problems.problem3);
-helpers.send_solution(solution);
+var initMatrix = function(length) {
+    for(var i=0; i<length; i++) {
+        matrix[i] = new Array(length);
+    }
+}
+var storeDistances = function(orders) {
+    initMatrix(orders.length)
+
+    for(let i = 0;i<orders.length-1;i++){
+        for(let j = i+1;j<orders.length;j++){
+            let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,orders[j].pos_lat,orders[j].pos_lng);
+
+            matrix[i][j] = distance;
+            matrix[j][i] = distance;
+        }
+    }
+}
+
+storeDistances(problems.problem1.orders);
+
+//var solution = solve_problem_dumb(problems.problem3);
+//helpers.send_solution(solution);
