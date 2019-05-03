@@ -10,27 +10,6 @@ const POSITION_ORIGINE = {
     lng: 0.5
 };
 
-var testOrders = [
-    {
-        order_id: 0,
-        pos_lat: 0.6126609754869003,
-        pos_lng: 0.19867138016525887,
-        amount: 448
-    },
-    {
-        order_id: 1,
-        pos_lat: 0.30010684105921714,
-        pos_lng: 0.6224569341244228,
-        amount: 430
-    },
-    {
-        order_id: 2,
-        pos_lat: 0.9979680476677266,
-        pos_lng: 0.2307132379080501,
-        amount: 358
-    }
-]
-
 var problems = {
     // 1000 commandes
     problem1: {
@@ -56,6 +35,8 @@ var problems = {
 const matrix = [[]];
 const visitedTab = [];
 
+let coefDist = 1.396;
+
 var solve_problem_dumb = function (problem) {
     var solution = {
         problem_id: problem.problem_id,
@@ -73,7 +54,7 @@ var solve_problem_dumb = function (problem) {
     for(let i=1;i<problem.orders.length;i++) {
         // On prend la commande la plus proche et on l'ajoute au trajet du livreur
         //var order = findClosestOrder(problem.orders, pos);
-        var order = findBetterOrder(problem.orders, currentOrder);
+        var order = findBetterOrder(problem.orders, currentOrder, i);
         currentOrder = order.order_id;
 
         solution.orders.push(order.order_id);
@@ -107,8 +88,8 @@ var storeInterest = function(orders) {
         for(let j = i+1;j<orders.length;j++){
             let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,orders[j].pos_lat,orders[j].pos_lng);
 
-            matrix[orders[i].order_id][orders[j].order_id] = orders[j].amount-distance*10;
-            matrix[orders[j].order_id][orders[i].order_id] = orders[i].amount-distance*10;
+            matrix[orders[i].order_id][orders[j].order_id] = distance;
+            matrix[orders[j].order_id][orders[i].order_id] = distance;
         }
     }
 }
@@ -119,7 +100,7 @@ var findStarter = function(orders, pos) {
 
     for(let i = 0;i<orders.length;i++){
         let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,pos.lat,pos.lng);
-        let value = orders[i].amount-distance*10;
+        let value = orders[i].amount-distance*coefDist;
 
         if(value > max){
             max = value;
@@ -130,15 +111,18 @@ var findStarter = function(orders, pos) {
     return index;
 }
 
-var findBetterOrder = function(orders, idOrder) {
+var findBetterOrder = function(orders, idOrder, tourBoucle) {
     let possibilities = matrix[idOrder];
     let max = -10000000;
     let ord = null;
     let index = 0;
 
     for(let i=0;i<matrix.length;i++){
-        if(possibilities[i] > max && !visitedTab.includes(i)) {
-            max = possibilities[i];
+        let bonus = orders[i].amount-tourBoucle > 0 ? orders[i].amount-tourBoucle : 0 ;
+        let value = bonus-possibilities[i]*coefDist;
+
+        if(value > max && !visitedTab.includes(i)) {
+            max = value;
             ord = orders[i];
             index = i;
         }
@@ -149,9 +133,11 @@ var findBetterOrder = function(orders, idOrder) {
     return ord;
 }
 
-let myProblem = problems.problem1;
+let myProblem = problems.problem3;
 
 storeInterest(myProblem.orders);
 var solution = solve_problem_dumb(myProblem);
+
+//console.log(helpers.get_score(myProblem, solution.orders));
 helpers.send_solution(solution);
 
