@@ -2,11 +2,34 @@ var _ = require('lodash');
 
 var helpers = require('./helpers.js')
 
-const USERNAME = "JE_DOIS_METTRE_MON_PRENOM";
+
+const USERNAME = "SEBASTIEN_KILLIAN";
+
 const POSITION_ORIGINE = {
     lat: 0.5,
     lng: 0.5
 };
+
+var testOrders = [
+    {
+        order_id: 0,
+        pos_lat: 0.6126609754869003,
+        pos_lng: 0.19867138016525887,
+        amount: 448
+    },
+    {
+        order_id: 1,
+        pos_lat: 0.30010684105921714,
+        pos_lng: 0.6224569341244228,
+        amount: 430
+    },
+    {
+        order_id: 2,
+        pos_lat: 0.9979680476677266,
+        pos_lng: 0.2307132379080501,
+        amount: 358
+    }
+]
 
 var problems = {
     // 1000 commandes
@@ -23,10 +46,15 @@ var problems = {
     problem3: {
         problem_id: 'problem3',
         orders: helpers.parseCsv('problem3.csv')
+    },
+    problem4: {
+        problem_id: 'problem4',
+        orders: helpers.parseCsv('problem4.csv')
     }
 };
 
 const matrix = [[]];
+const visitedTab = [];
 
 var solve_problem_dumb = function (problem) {
     var solution = {
@@ -37,18 +65,25 @@ var solve_problem_dumb = function (problem) {
 
     var pos = POSITION_ORIGINE;
 
-    while(problem.orders.length > 0) {
-        console.log(problem.orders.length);
+    var currentOrder = findStarter(problem.orders, pos);
+    visitedTab.push(currentOrder)
+
+    solution.orders.push(currentOrder);
+
+    for(let i=1;i<problem.orders.length;i++) {
         // On prend la commande la plus proche et on l'ajoute au trajet du livreur
-        var order = findClosestOrder(problem.orders, pos);
+        //var order = findClosestOrder(problem.orders, pos);
+        var order = findBetterOrder(problem.orders, currentOrder);
+        currentOrder = order.order_id;
+
         solution.orders.push(order.order_id);
 
         // On garde en mémoire la nouvelle position du livreur
-        pos.lat = order.pos_lat;
-        pos.lng = order.pos_lng;
+        //pos.lat = order.pos_lat;
+        //pos.lng = order.pos_lng;
 
         // On retire la commande qui vient d'être réalisé
-        problem.orders.splice(problem.orders.indexOf(order), 1);
+        //problem.orders.splice(problem.orders.indexOf(order), 1);
     }
     return solution;
 };
@@ -65,20 +100,58 @@ var initMatrix = function(length) {
         matrix[i] = new Array(length);
     }
 }
-var storeDistances = function(orders) {
+var storeInterest = function(orders) {
     initMatrix(orders.length)
 
     for(let i = 0;i<orders.length-1;i++){
         for(let j = i+1;j<orders.length;j++){
             let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,orders[j].pos_lat,orders[j].pos_lng);
 
-            matrix[i][j] = distance;
-            matrix[j][i] = distance;
+            matrix[orders[i].order_id][orders[j].order_id] = orders[j].amount-distance*10;
+            matrix[orders[j].order_id][orders[i].order_id] = orders[i].amount-distance*10;
         }
     }
 }
 
-storeDistances(problems.problem1.orders);
+var findStarter = function(orders, pos) {
+    let max = -10000000;
+    let index = 0;
 
-//var solution = solve_problem_dumb(problems.problem3);
-//helpers.send_solution(solution);
+    for(let i = 0;i<orders.length;i++){
+        let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,pos.lat,pos.lng);
+        let value = orders[i].amount-distance*10;
+
+        if(value > max){
+            max = value;
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+var findBetterOrder = function(orders, idOrder) {
+    let possibilities = matrix[idOrder];
+    let max = -10000000;
+    let ord = null;
+    let index = 0;
+
+    for(let i=0;i<matrix.length;i++){
+        if(possibilities[i] > max && !visitedTab.includes(i)) {
+            max = possibilities[i];
+            ord = orders[i];
+            index = i;
+        }
+    }
+
+    visitedTab.push(index);
+
+    return ord;
+}
+
+let myProblem = problems.problem1;
+
+storeInterest(myProblem.orders);
+var solution = solve_problem_dumb(myProblem);
+helpers.send_solution(solution);
+
