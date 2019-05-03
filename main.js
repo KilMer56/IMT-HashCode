@@ -1,7 +1,7 @@
 var _ = require('lodash');
+const { GenAlgo, greater, fittestSingle } = require("genalgo");
 
 var helpers = require('./helpers.js')
-
 
 const USERNAME = "SEBASTIEN_KILLIAN";
 
@@ -81,6 +81,7 @@ var initMatrix = function(length) {
         matrix[i] = new Array(length);
     }
 }
+
 var storeInterest = function(orders) {
     initMatrix(orders.length)
 
@@ -133,9 +134,100 @@ var findBetterOrder = function(orders, idOrder, tourBoucle) {
     return ord;
 }
 
+var solveSolutionV1 = function(problem, coef){
+    matrix = [[]];
+    visitedTab = [];
+    coefDist = coef;
+
+    storeInterest(problem.orders);
+    var solution = solve_problem_dumb(problem);
+
+    return solution;
+}
+
+var checkScore = function(myProblem, orders){
+    var score = helpers.get_score(myProblem, orders)
+    return score.score;
+}
+
+var findGeneticBestOrder = function(problem) {
+    const tabLength = problem.orders.length;
+
+    // Create a GenAlgo object with simple parameters
+    const algo = new GenAlgo({
+        mutationProbability: 0.8,
+        crossoverProbability: 0.8,
+        iterationNumber: 10
+    });
+
+    const seed = [];
+
+    for(let i =0;i<500;i++){
+        var solution = solveSolutionV1(problem, 1+Math.random());
+        seed.push(solution.orders);
+    }
+
+    // Function used to mutate an individual
+    const mutation = orders => {
+        /*let middle = parseInt(orders.length/2);
+        let firstPart = orders.splice(middle, orders.length-middle);
+        orders = orders.concat(firstPart);*/
+
+        for(let i=0;i<20;i++){
+            let index1 = Math.floor(Math.random()*Math.floor(tabLength));
+            let index2 = Math.floor(Math.random()*Math.floor(tabLength));
+
+            var tmp = orders[index1];
+            orders[index1] = orders[index2];
+            orders[index2] = tmp;
+        }
+
+        return orders;
+    };
+
+    const crossover = (order1, order2) => {
+        let index = Math.floor(Math.random()*Math.floor(2));
+
+        return index === 0 ? order1 : order2;
+      };
+
+    // Will be called at each iteration
+    const iterationCallback = ({ bestIndividual, elapsedTime, iterationNumber }) => {
+        console.log("Iteration " + iterationNumber);
+        console.log("Best fitness : " + bestIndividual.fitness);
+        console.log("Elapsed time : " + elapsedTime);
+        return true;
+    };
+
+    const fitness = function (orders) {
+        return checkScore(problem, orders);
+    }
+
+    algo.setSeed(seed);
+    algo.setFitnessEvaluator(fitness);
+    algo.setFitnessComparator(greater);
+    algo.setMutationFunction(mutation);
+    algo.setCrossoverFunction(crossover);
+    algo.setSelectSingleFunction(fittestSingle);
+    algo.setIterationCallback(iterationCallback);
+
+    algo.start().then(data => {
+        var solution = {
+            problem_id: problem.problem_id,
+            username: USERNAME,
+            orders: data[0].entity
+        };
+
+        console.log(solution)
+
+        helpers.send_solution(solution);
+    });
+}
+
 let myProblem = problems.problem1;
 
-storeInterest(myProblem.orders);
+findGeneticBestOrder(myProblem);
+/*storeInterest(myProblem.orders);
 var solution = solve_problem_dumb(myProblem);
-helpers.send_solution(solution);
+helpers.send_solution(solution);*/
 

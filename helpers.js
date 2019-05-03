@@ -72,7 +72,7 @@ exports.get_score = function(problem, orders) {
      
     _.each(orders, function (order_id, i_order) {
         var order = _.find(problem.orders, function (o) {
-            return o.order_id === order_id
+            return o.order_id == order_id
         });
         var distance_order = exports.compute_dist(pos.lat, pos.lng, order.pos_lat, order.pos_lng);
         var bonus_order = Math.max(0, order.amount - i_order);
