@@ -1,0 +1,12 @@
+{
+  "name": "datascience",
+  "description": "Datascience tool",
+  "version": "1.0.0",
+  "engines": {
+    "node": ">= 6.0.0"
+  },
+  "dependencies": {
+    "request": "2.88.0",
+    "lodash": "4.17.11"
+  }
+}
