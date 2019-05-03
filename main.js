@@ -157,13 +157,15 @@ var findGeneticBestOrder = function(problem) {
     const algo = new GenAlgo({
         mutationProbability: 0.8,
         crossoverProbability: 0.8,
-        iterationNumber: 10
+        iterationNumber: 500
     });
 
     const seed = [];
 
-    for(let i =0;i<500;i++){
-        var solution = solveSolutionV1(problem, 1+Math.random());
+    for(let i =0;i<100;i++){
+        var precision = 100; // 3 decimals
+        var randomnum = Math.floor(Math.random() * (8 * precision - 1 * precision) + 1 * precision) / (1*precision);
+        var solution = solveSolutionV1(problem, randomnum);
         seed.push(solution.orders);
     }
 
@@ -173,7 +175,7 @@ var findGeneticBestOrder = function(problem) {
         let firstPart = orders.splice(middle, orders.length-middle);
         orders = orders.concat(firstPart);*/
 
-        for(let i=0;i<20;i++){
+        for(let i=0;i<10;i++){
             let index1 = Math.floor(Math.random()*Math.floor(tabLength));
             let index2 = Math.floor(Math.random()*Math.floor(tabLength));
 
