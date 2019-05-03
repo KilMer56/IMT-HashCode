@@ -32,8 +32,8 @@ var problems = {
     }
 };
 
-const matrix = [[]];
-const visitedTab = [];
+let matrix = [[]];
+let visitedTab = [];
 
 let coefDist = 1.396;
 
@@ -133,11 +133,9 @@ var findBetterOrder = function(orders, idOrder, tourBoucle) {
     return ord;
 }
 
-let myProblem = problems.problem3;
+let myProblem = problems.problem1;
 
 storeInterest(myProblem.orders);
 var solution = solve_problem_dumb(myProblem);
-
-//console.log(helpers.get_score(myProblem, solution.orders));
 helpers.send_solution(solution);
 
