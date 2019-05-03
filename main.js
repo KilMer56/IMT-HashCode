@@ -48,46 +48,30 @@ var solve_problem_dumb = function (problem) {
 
     var currentOrder = findStarter(problem.orders, pos);
     visitedTab.push(currentOrder)
-
     solution.orders.push(currentOrder);
 
-    for(let i=1;i<problem.orders.length;i++) {
-        // On prend la commande la plus proche et on l'ajoute au trajet du livreur
-        //var order = findClosestOrder(problem.orders, pos);
+    for (let i = 1; i < problem.orders.length; i++) {
+
         var order = findBetterOrder(problem.orders, currentOrder, i);
         currentOrder = order.order_id;
 
         solution.orders.push(order.order_id);
-
-        // On garde en mémoire la nouvelle position du livreur
-        //pos.lat = order.pos_lat;
-        //pos.lng = order.pos_lng;
-
-        // On retire la commande qui vient d'être réalisé
-        //problem.orders.splice(problem.orders.indexOf(order), 1);
     }
     return solution;
 };
 
-var findClosestOrder = function (orders, pos) {
-    orders = orders.sort(function (orderA, orderB) {
-        return helpers.compute_dist(orderA.pos_lat, orderA.pos_lng, pos.lat, pos.lng) <= helpers.compute_dist(orderB.pos_lat, orderB.pos_lng, pos.lat, pos.lng)
-    });
-    return orders[orders.length-1];
-}
-
-var initMatrix = function(length) {
-    for(var i=0; i<length; i++) {
+var initMatrix = function (length) {
+    for (var i = 0; i < length; i++) {
         matrix[i] = new Array(length);
     }
 }
 
-var storeInterest = function(orders) {
+var storeInterest = function (orders) {
     initMatrix(orders.length)
 
-    for(let i = 0;i<orders.length-1;i++){
-        for(let j = i+1;j<orders.length;j++){
-            let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,orders[j].pos_lat,orders[j].pos_lng);
+    for (let i = 0; i < orders.length - 1; i++) {
+        for (let j = i + 1; j < orders.length; j++) {
+            let distance = helpers.compute_dist(orders[i].pos_lat, orders[i].pos_lng, orders[j].pos_lat, orders[j].pos_lng);
 
             matrix[orders[i].order_id][orders[j].order_id] = distance;
             matrix[orders[j].order_id][orders[i].order_id] = distance;
@@ -95,15 +79,15 @@ var storeInterest = function(orders) {
     }
 }
 
-var findStarter = function(orders, pos) {
+var findStarter = function (orders, pos) {
     let max = -10000000;
     let index = 0;
 
-    for(let i = 0;i<orders.length;i++){
-        let distance = helpers.compute_dist(orders[i].pos_lat,orders[i].pos_lng,pos.lat,pos.lng);
-        let value = orders[i].amount-distance*coefDist;
+    for (let i = 0; i < orders.length; i++) {
+        let distance = helpers.compute_dist(orders[i].pos_lat, orders[i].pos_lng, pos.lat, pos.lng);
+        let value = orders[i].amount - distance * coefDist;
 
-        if(value > max){
+        if (value > max) {
             max = value;
             index = i;
         }
@@ -112,17 +96,17 @@ var findStarter = function(orders, pos) {
     return index;
 }
 
-var findBetterOrder = function(orders, idOrder, tourBoucle) {
+var findBetterOrder = function (orders, idOrder, tourBoucle) {
     let possibilities = matrix[idOrder];
     let max = -10000000;
     let ord = null;
     let index = 0;
 
-    for(let i=0;i<matrix.length;i++){
-        let bonus = orders[i].amount-tourBoucle > 0 ? orders[i].amount-tourBoucle : 0 ;
-        let value = bonus-possibilities[i]*coefDist;
+    for (let i = 0; i < matrix.length; i++) {
+        let bonus = orders[i].amount - tourBoucle > 0 ? orders[i].amount - tourBoucle : 0;
+        let value = bonus - possibilities[i] * coefDist;
 
-        if(value > max && !visitedTab.includes(i)) {
+        if (value > max && !visitedTab.includes(i)) {
             max = value;
             ord = orders[i];
             index = i;
@@ -134,7 +118,7 @@ var findBetterOrder = function(orders, idOrder, tourBoucle) {
     return ord;
 }
 
-var solveSolutionV1 = function(problem, coef){
+var solveSolutionV1 = function (problem, coef) {
     matrix = [[]];
     visitedTab = [];
     coefDist = coef;
@@ -145,39 +129,36 @@ var solveSolutionV1 = function(problem, coef){
     return solution;
 }
 
-var checkScore = function(myProblem, orders){
+var checkScore = function (myProblem, orders) {
     var score = helpers.get_score(myProblem, orders)
     return score.score;
 }
 
-var findGeneticBestOrder = function(problem) {
+var findGeneticBestOrder = function (problem) {
     const tabLength = problem.orders.length;
 
     // Create a GenAlgo object with simple parameters
     const algo = new GenAlgo({
         mutationProbability: 0.8,
         crossoverProbability: 0.8,
-        iterationNumber: 500
+        iterationNumber: 5
     });
 
     const seed = [];
 
-    for(let i =0;i<100;i++){
-        var precision = 100; // 3 decimals
-        var randomnum = Math.floor(Math.random() * (8 * precision - 1 * precision) + 1 * precision) / (1*precision);
+    for (let i = 0; i < 500; i++) {
+        var precision = 1000; // 3 decimals
+        var randomnum = Math.floor(Math.random() * (10 * precision - 1 * precision) + 1 * precision) / (1 * precision);
         var solution = solveSolutionV1(problem, randomnum);
         seed.push(solution.orders);
     }
 
     // Function used to mutate an individual
     const mutation = orders => {
-        /*let middle = parseInt(orders.length/2);
-        let firstPart = orders.splice(middle, orders.length-middle);
-        orders = orders.concat(firstPart);*/
 
-        for(let i=0;i<10;i++){
-            let index1 = Math.floor(Math.random()*Math.floor(tabLength));
-            let index2 = Math.floor(Math.random()*Math.floor(tabLength));
+        for (let i = 0; i < 10; i++) {
+            let index1 = Math.floor(Math.random() * Math.floor(tabLength));
+            let index2 = Math.floor(Math.random() * Math.floor(tabLength));
 
             var tmp = orders[index1];
             orders[index1] = orders[index2];
@@ -188,10 +169,10 @@ var findGeneticBestOrder = function(problem) {
     };
 
     const crossover = (order1, order2) => {
-        let index = Math.floor(Math.random()*Math.floor(2));
+        let index = Math.floor(Math.random() * Math.floor(2));
 
         return index === 0 ? order1 : order2;
-      };
+    };
 
     // Will be called at each iteration
     const iterationCallback = ({ bestIndividual, elapsedTime, iterationNumber }) => {
@@ -229,7 +210,6 @@ var findGeneticBestOrder = function(problem) {
 let myProblem = problems.problem1;
 
 findGeneticBestOrder(myProblem);
-/*storeInterest(myProblem.orders);
-var solution = solve_problem_dumb(myProblem);
+/*var solution = solveSolutionV1(myProblem, 1.396);
 helpers.send_solution(solution);*/
 
